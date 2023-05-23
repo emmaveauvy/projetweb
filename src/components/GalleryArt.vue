@@ -4,10 +4,15 @@
     <input type="text" v-model="search" placeholder ="Chercher une oeuvre ou un.e artiste" >
     <button v-if="search" @click="cleanSearch">X</button>
   </div>
-  <div class="recherche" >
-    <input type="text" v-model="search" placeholder ="Chercher une oeuvre ou un.e artiste" >
-    <button v-if="search" @click="cleanSearch">X</button>
+
+  <div class="boutons" >
+    <button :class="{ active: sortBy === 'year' }" @click="orderByDate">Trier par date</button>
+    <button :class="{ active: sortBy === 'name' }" @click="orderByTitle">Trier par titre</button>
+    <button :class="{ active: sortBy === 'artist' }" @click="orderByArtist">Trier par artiste</button>
+
   </div>
+
+
   <div class="conteneur" >
     <div :class="['gallery', isMatch(object.title) ||  isMatch(object.artistDisplayName) ? '' : 'invisible']" v-for="object in triIMG " :key="object" >
 
@@ -17,32 +22,14 @@
 </div>
 </template>
     
+
+
 <script>
 import objectsID from '../services/api/objectsID.js';
 import objects from '../services/api/objectsName.js';
 
-if(document.ready){
-    //var div = document.getElementById("gallery")
-    //console.log(div)
-
-}
 
 
-
-
-/*
-import departements from '../services/api/departements.js';
-
-
-
-//var div = document.querySelector("div");
-const myFunction = async () => {
-    await departements.getDepartements()
-    //console.log(data) // Done
-}
-
-myFunction();
-*/
 import PieceArt from './PieceArt.vue';
 
 
@@ -56,10 +43,11 @@ export default {
             objects: [],
             pieceArtName: [],
             author: [],
-            date: [],
+            year: [],
             img: [],
             ids: [],
             search: '', 
+            sortBy: 'date'
         }
 
     },
@@ -84,7 +72,7 @@ boucle qui parcourt this objects avec la condition du if,
                 for( let i=0; i<this.objects.length; i++){
                     if (this.objects[i].primaryImageSmall !== ''){
                         objetsTries.push(this.objects[i]);
-                        console.log(objetsTries);
+                        //console.log(objetsTries);
 
                     }
                 }
@@ -123,17 +111,20 @@ boucle qui parcourt this objects avec la condition du if,
             return name.toLowerCase().includes(this.search.toLowerCase())
         },
 
-        nonResultat(){
-            let gallery= document.querySelector(".gallery");
-            for (let i =0; i<gallery.length; i++){
-                
-                if(gallery[i].innerHTML==undefined){
-                    gallery[i].classList.add("none");
+        orderByDate() {
+            this.objects.sort((a, b) => a.year - b.year);
+            this.sortBy = 'year';
+        },
+        orderByTitle() {
+            this.objects.sort((a, b) => a.name - b.name);
+            this.sortBy = 'name';
+        },
 
-                }
+        orderByArtist() {
+            this.objects.sort((a, b) => a.artist - b.artist);
+            this.sortBy = 'artist';
+        },
 
-            }
-        }
 
     }
 }
