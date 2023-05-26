@@ -1,135 +1,116 @@
 
 <template>
-  <div class="recherche" >
-    <input type="text" v-model="search" placeholder ="Chercher une oeuvre ou un.e artiste" >
+  <div class="recherche">
+    <input type="text" v-model="search" placeholder="Chercher une oeuvre ou un.e artiste">
     <button v-if="search" @click="cleanSearch">X</button>
   </div>
 
-  <div class="boutons" >
+  <div class="boutons">
+    <button @click="toggleFilter">Oeuvre après 1750</button>
     <button :class="{ active: sortBy === 'year' }" @click="orderByDate">Trier par date</button>
     <button :class="{ active: sortBy === 'name' }" @click="orderByTitle">Trier par titre</button>
     <button :class="{ active: sortBy === 'artist' }" @click="orderByArtist">Trier par artiste</button>
-
   </div>
 
-
-  <div class="conteneur" >
-    <div :class="['gallery', isMatch(object.title) ||  isMatch(object.artistDisplayName) ? '' : 'invisible']" v-for="object in triIMG " :key="object" >
-
-    <PieceArt :img="object.primaryImageSmall" :artist="object.artistDisplayName" :year="object.objectDate" :name="object.title"  />
-
+  <div class="conteneur">
+    <div class="gallery" v-for="object in displayedObjects" :key="object">
+      <PieceArt :img="object.primaryImageSmall" :artist="object.artistDisplayName" :year="object.objectDate" :name="object.title" />
     </div>
-</div>
+  </div>
 </template>
-    
-
 
 <script>
 import objectsID from '../services/api/objectsID.js';
 import objects from '../services/api/objectsName.js';
-
-
-
 import PieceArt from './PieceArt.vue';
 
-
-
 export default {
-    name: "GalleryArt",
-    components: { PieceArt },
-    data() {
-        return {
-            objectsID: [],
-            objects: [],
-            pieceArtName: [],
-            author: [],
-            year: [],
-            img: [],
-            ids: [],
-            search: '', 
-            sortBy: 'date'
-        }
-
+  name: "GalleryArt",
+  components: { PieceArt },
+  data() {
+    return {
+      objectsID: [],
+      objects: [],
+      search: '',
+      sortBy: 'date',
+      filterEnabled: false,
+    };
+  },
+  created: async function () {
+    await this.getIDObjts();
+    await this.getObjts();
+  },
+  props: {},
+  computed: {
+    displayedObjects() {
+      let filteredObjects = this.objects;
+      if (this.filterEnabled) {
+        filteredObjects = filteredObjects.filter(object => object.objectDate > 1750);
+      }
+      return filteredObjects
+        .sort((a, b) => {
+          if (this.sortBy === 'year') {
+            return this.compareByYear(a, b);
+          } else if (this.sortBy === 'name') {
+            return this.compareByTitle(a, b);
+          } else if (this.sortBy === 'artist') {
+            return this.compareByArtist(a, b);
+          }
+          return 0;
+        })
+        .slice(0, 50);
     },
-     created: async function(){
-         await this.getIDObjts();
-         await this.getObjts();
+  },
+  methods: {
+    async getIDObjts() {
+      const request = await objectsID.getIDObjects();
+      this.objectsID = request["objectIDs"];
     },
-    
-    props:{
-       
+    async getObjts() {
+      for (let i = 0; i < this.objectsID.length; i++) {
+        const object = await objects.getObjects(this.objectsID[i]);
+        this.objects.push(object);
+      }
     },
-    computed: {
-        /*
-pré tri sur objects pour les sortir du tableau
-utiliser données calculées : définir un champs qui est une fonction
-boucle qui parcourt this objects avec la condition du if, 
-  */    
-
-        triIMG(){
-           let objetsTries =[];
-            if (this.objects.length != 0){
-                for( let i=0; i<this.objects.length; i++){
-                    if (this.objects[i].primaryImageSmall !== ''){
-                        objetsTries.push(this.objects[i]);
-                        //console.log(objetsTries);
-
-                    }
-                }
-                return objetsTries;
-                
-            }else{
-               
-                return 4;
-                
-            }
-           
-        }
+    cleanSearch() {
+      this.search = "";
     },
-    methods: {
-        async getIDObjts () {
-            const request = await objectsID.getIDObjects();
-            this.ids = request["objectIDs"];
-
-        },
-        async getObjts  (){
-            // pour tous les id qu'il y a dans le tableau id 
-            // remplir le tableau tabs avec le tableau correspondant à l'id
-           
-           
-            for (let i =0; i<this.ids.length; i++){
-                
-                this.objects.push(await objects.getObjects(this.ids[i]));
-
-            }
-           
-        },
-        cleanSearch: function() {
-            this.search = ""
-        },
-        isMatch(name) {
-            return name.toLowerCase().includes(this.search.toLowerCase())
-        },
-
-        orderByDate() {
-            this.objects.sort((a, b) => a.year - b.year);
-            this.sortBy = 'year';
-        },
-        orderByTitle() {
-            this.objects.sort((a, b) => a.name - b.name);
-            this.sortBy = 'name';
-        },
-
-        orderByArtist() {
-            this.objects.sort((a, b) => a.artist - b.artist);
-            this.sortBy = 'artist';
-        },
-
-
-    }
-}
-
+    compareByYear(a, b) {
+      if (a.objectDate && b.objectDate) {
+        return a.objectDate.localeCompare(b.objectDate);
+      }
+      return 0;
+    },
+    compareByTitle(a, b) {
+      if (a.title && b.title) {
+        return a.title.localeCompare(b.title);
+      }
+      return 0;
+    },
+    compareByArtist(a, b) {
+      if (a.artistDisplayName && b.artistDisplayName) {
+        return a.artistDisplayName.localeCompare(b.artistDisplayName);
+      }
+      return 0;
+    },
+    orderByDate() {
+      this.sortBy = 'year';
+    },
+    orderByTitle() {
+      this.sortBy = 'name';
+    },
+    orderByArtist() {
+      this.sortBy = 'artist';
+    },
+    toggleFilter() {
+      this.filterEnabled = !this.filterEnabled;
+    },
+  },
+};
 </script>
+
+
+
 <style>
 
 .recherche{

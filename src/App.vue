@@ -1,8 +1,10 @@
 <template>
+ <header>
   <h1>European Paintings</h1>
+ </header> 
 
     <GalleryArt/>
-
+<footer>Emma Veauvy</footer>
 </template>
 
 <script>
