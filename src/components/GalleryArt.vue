@@ -144,6 +144,10 @@ input{
 .conteneur {
     display: flex;
     flex-wrap: wrap;
+    
+}
+.boutons{
+  margin-bottom: 2em;
 }
 
 .gallery{
@@ -170,9 +174,16 @@ input{
         justify-content: space-around;
         flex-wrap: wrap;
     }
+    @media (max-width: 540px) {
+      .conteneur{
+        flex-direction: column;
+        justify-content: center ;
+        align-items: center;
+      }
+      .gallery{
+    width: 50%;
+}
 
-    .disappear{
-        width:0%;
-    }
+    } 
 
 </style>
